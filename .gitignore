@@ -1,0 +1,35 @@
+# Root directory test PNG images (kept local, excluded from Git)
+/*.png
+
+# Generated runtime artifacts & checkpoints
+checkpoints/
+font_index/
+debug_crops/
+
+# Python caches & packaging
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments & env files
+.venv/
+venv/
+env/
+.env
+
+# IDE & OS artifacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GlyphCLIP — Contrastive Font Matching Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #e2e8f0;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gradient-btn {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      transition: all 0.2s ease;
+    }
+    .gradient-btn:hover {
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+      filter: brightness(1.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navbar -->
+  <header class="glass sticky top-0 z-50 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg gradient-btn flex items-center justify-center font-bold text-white text-lg shadow-md">
+          G
+        </div>
+        <div>
+          <span class="text-xl font-bold tracking-tight text-white">Glyph<span class="gradient-text">CLIP</span></span>
+          <span class="text-xs px-2 py-0.5 ml-2 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800 mono">v2.1</span>
+        </div>
+      </div>
+
+      <!-- Live Status Badge -->
+      <div class="flex items-center space-x-4">
+        <div id="status-pill" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="status-text" class="text-slate-300 mono">Connecting...</span>
+        </div>
+        <div class="hidden sm:flex items-center space-x-1 text-xs text-slate-400 mono">
+          <span class="px-2 py-0.5 bg-slate-800 rounded">Vectors: <strong id="vector-count" class="text-indigo-400">...</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
+    <div class="flex space-x-2 border-b border-slate-800 pb-3">
+      <button onclick="switchTab('recognize')" id="tab-btn-recognize" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 bg-indigo-600 text-white shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span>Visual Font Recognition</span>
+      </button>
+      <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>Indexed Font Catalog</span>
+      </button>
+      <button onclick="switchTab('ingest')" id="tab-btn-ingest" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Zero-Shot Ingest (.ttf/.otf)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Areas -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+
+    <!-- TAB 1: RECOGNIZE -->
+    <section id="tab-recognize" class="tab-content space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Upload & Controls -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass p-5 rounded-2xl">
+            <h2 class="text-base font-semibold text-white mb-1 flex items-center justify-between">
+              <span>Query Text / Crop Image</span>
+              <span class="text-xs text-slate-400 font-normal">Supports PNG, JPG, WebP</span>
+            </h2>
+            <p class="text-xs text-slate-400 mb-4">Upload a word crop or screenshot, paste from clipboard (<kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-700">Ctrl+V</kbd>), or generate a test canvas.</p>
+
+            <!-- Dropzone -->
+            <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition-colors relative bg-slate-900/40">
+              <input type="file" id="file-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+              <div id="upload-prompt" class="space-y-2">
+                <div class="w-12 h-12 rounded-full bg-slate-800 text-indigo-400 flex items-center justify-center mx-auto">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="text-sm font-medium text-slate-200">Click to upload or drag & drop</div>
+                <div class="text-xs text-slate-500">Paste screenshots directly anywhere on page</div>
+              </div>
+              <div id="preview-wrapper" class="hidden">
+                <img id="image-preview" class="max-h-52 mx-auto rounded-lg border border-slate-700 shadow-md">
+                <button type="button" onclick="clearImage(event)" class="mt-2 text-xs text-rose-400 hover:text-rose-300">Remove image</button>
+              </div>
+            </div>
+
+            <!-- Synthetic Test Canvas Generator -->
+            <div class="mt-4 pt-4 border-t border-slate-800/80">
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-semibold text-slate-300">Quick Test Text Generator</label>
+                <span class="text-xs text-slate-500">Render sample directly</span>
+              </div>
+              <div class="flex space-x-2">
+                <input type="text" id="sample-text-input" value="Typo" placeholder="e.g. Graphic" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 mono">
+                <select id="sample-font-select" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                  <option value="Arial">Arial (Sans)</option>
+                  <option value="Times New Roman">Times (Serif)</option>
+                  <option value="Segoe UI">Segoe UI</option>
+                  <option value="Courier New">Courier</option>
+                </select>
+                <button onclick="generateSampleImage()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors">
+                  Draw
+                </button>
+              </div>
+            </div>
+
+            <!-- Known Text Input -->
+            <div class="mt-4 pt-4 border-t border-slate-800/80">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-300">Known Word in Crop (Optional)</label>
+                <span class="text-[11px] text-indigo-400 font-mono">e.g. Funnel</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mb-2">Leave blank for automatic character detection, or specify the letters to lock character-level metric alignment.</p>
+              <input type="text" id="known-text-input" placeholder="Type letters (e.g. Funnel, Typo)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 mono">
+            </div>
+
+            <!-- Options -->
+            <div class="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+              <div>
+                <label class="text-xs font-medium text-slate-300">Top Candidates (K)</label>
+                <div class="flex items-center space-x-2 mt-1">
+                  <input type="range" id="top-k" min="1" max="10" value="5" class="w-32 accent-indigo-500" oninput="document.getElementById('top-k-val').innerText = this.value">
+                  <span id="top-k-val" class="text-xs mono text-indigo-400 font-bold">5</span>
+                </div>
+              </div>
+
+              <button id="recognize-btn" onclick="executeRecognition()" class="gradient-btn px-6 py-2.5 rounded-xl font-semibold text-sm text-white flex items-center space-x-2 shadow-lg disabled:opacity-50">
+                <svg id="btn-spinner" class="hidden animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                <span id="btn-label">Match Typeface</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Results Panel -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="glass p-5 rounded-2xl min-h-[460px] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+                <span>Retrieved Typeface Candidates</span>
+              </h2>
+              <div id="query-metrics" class="hidden flex items-center space-x-3 text-xs mono text-slate-400">
+                <span class="px-2 py-0.5 bg-slate-900 rounded border border-slate-800">Latency: <span id="metric-latency" class="text-emerald-400">0ms</span></span>
+                <span class="px-2 py-0.5 bg-slate-900 rounded border border-slate-800">Detected Glyphs: <span id="metric-glyphs" class="text-indigo-400">0</span></span>
+              </div>
+            </div>
+
+            <!-- Empty / Placeholder State -->
+            <div id="results-placeholder" class="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-500 space-y-3">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center text-slate-600">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+              </div>
+              <p class="text-sm font-medium text-slate-400">No query image submitted yet</p>
+              <p class="text-xs max-w-sm">Upload a word crop or draw a sample text above to query the 3,000 canonical glyph embeddings in real time.</p>
+            </div>
+
+            <!-- Results List -->
+            <div id="results-list" class="space-y-3 mt-4 hidden"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: CATALOG BROWSER -->
+    <section id="tab-catalog" class="tab-content space-y-4 hidden">
+      <div class="glass p-5 rounded-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-white">Indexed Font Catalog</h2>
+            <p class="text-xs text-slate-400">Typefaces indexed in the local canonical vector database.</p>
+          </div>
+          <div class="relative w-full sm:w-72">
+            <input type="text" id="catalog-search" oninput="filterCatalog(this.value)" placeholder="Filter by family name..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            <svg class="w-4 h-4 text-slate-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+        </div>
+
+        <div id="catalog-loading" class="text-center py-12 text-slate-500 mono text-sm">Loading font catalog...</div>
+        <div id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ZERO-SHOT INGEST -->
+    <section id="tab-ingest" class="tab-content space-y-4 hidden">
+      <div class="glass p-6 rounded-2xl max-w-2xl mx-auto space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white">Zero-Shot Font Ingestion</h2>
+          <p class="text-xs text-slate-400 mt-1">Upload any <code class="mono text-indigo-400">.ttf</code> or <code class="mono text-indigo-400">.otf</code> font file. GlyphCLIP will deterministically render its canonical character set, project vectors via <span class="mono">E_c</span>, and insert them directly into the vector database without retraining.</p>
+        </div>
+
+        <form id="ingest-form" onsubmit="executeFontIngestion(event)" class="space-y-4">
+          <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition-colors relative bg-slate-900/40">
+            <input type="file" id="font-file-input" accept=".ttf,.otf" multiple required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFontSelected(this)">
+            <div id="font-upload-prompt" class="space-y-2">
+              <div class="w-12 h-12 rounded-full bg-indigo-950 text-indigo-400 flex items-center justify-center mx-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              </div>
+              <div class="text-sm font-medium text-slate-200">Select one or more .ttf / .otf files (e.g. Regular + Bold)</div>
+              <div id="font-file-name" class="text-xs mono text-indigo-400 font-semibold"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-semibold text-slate-300">Family Override (Optional)</label>
+              <input type="text" id="font-family-override" placeholder="e.g. Custom Sans" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 mt-1">
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-300">License Tag (Optional)</label>
+              <input type="text" id="font-license-override" placeholder="e.g. OFL-1.1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 mt-1">
+            </div>
+          </div>
+
+          <button type="submit" id="ingest-btn" class="w-full gradient-btn py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center space-x-2 shadow-lg">
+            <svg id="ingest-spinner" class="hidden animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            <span id="ingest-btn-label">Index Font Into Database</span>
+          </button>
+        </form>
+
+        <div id="ingest-result" class="hidden p-4 rounded-xl border border-emerald-900/50 bg-emerald-950/20 text-emerald-300 text-xs mono"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="glass border-t border-slate-800/80 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+      <div>Project Typographic: GlyphCLIP v2.1 • Continuous Metric Manifold Font Matching</div>
+      <div class="mono mt-2 sm:mt-0">FastAPI • MobileNetV4 • InfoNCE • PyTorch CUDA</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    let activeImageFile = null;
+    let catalogCache = [];
+
+    // Initialize health and stats
+    async function checkHealth() {
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        document.getElementById('status-text').innerText = `${data.device.toUpperCase()} Online`;
+        document.getElementById('vector-count').innerText = Number(data.total_vectors_indexed).toLocaleString();
+      } catch (e) {
+        document.getElementById('status-text').innerText = 'Offline / Connecting';
+        document.getElementById('vector-count').innerText = '0';
+      }
+    }
+
+    // Tab Switching
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-400');
+      });
+
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tab}`);
+      activeBtn.classList.add('bg-indigo-600', 'text-white');
+      activeBtn.classList.remove('text-slate-400');
+
+      if (tab === 'catalog' && catalogCache.length === 0) {
+        loadCatalog();
+      }
+    }
+
+    // Drag and Drop & Paste handling
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const previewWrapper = document.getElementById('preview-wrapper');
+    const imagePreview = document.getElementById('image-preview');
+    const uploadPrompt = document.getElementById('upload-prompt');
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+
+    window.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          handleImageFile(blob);
+          break;
+        }
+      }
+    });
+
+    function handleImageFile(file) {
+      activeImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        uploadPrompt.classList.add('hidden');
+        previewWrapper.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage(e) {
+      if (e) e.stopPropagation();
+      activeImageFile = null;
+      fileInput.value = '';
+      imagePreview.src = '';
+      previewWrapper.classList.add('hidden');
+      uploadPrompt.classList.remove('hidden');
+    }
+
+    // Quick Test Image Generator
+    function generateSampleImage() {
+      const text = document.getElementById('sample-text-input').value.trim() || 'Typo';
+      const font = document.getElementById('sample-font-select').value;
+      
+      const knownInput = document.getElementById('known-text-input');
+      if (knownInput) {
+        knownInput.value = text;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 120;
+      const ctx = canvas.getContext('2d');
+
+      // White background with slight noise
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Render text
+      ctx.fillStyle = '#111827';
+      ctx.font = `bold 64px "${font}", serif, sans-serif`;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      canvas.toBlob((blob) => {
+        const file = new File([blob], 'synthetic_sample.png', { type: 'image/png' });
+        handleImageFile(file);
+      }, 'image/png');
+    }
+
+    // Execute Recognition
+    async function executeRecognition() {
+      if (!activeImageFile) {
+        alert('Please upload, draw, or paste an image crop first.');
+        return;
+      }
+
+      const btn = document.getElementById('recognize-btn');
+      const spinner = document.getElementById('btn-spinner');
+      const label = document.getElementById('btn-label');
+      const topK = document.getElementById('top-k').value;
+      const knownText = (document.getElementById('known-text-input')?.value || '').trim();
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      label.innerText = 'Recognizing...';
+
+      const formData = new FormData();
+      formData.append('file', activeImageFile);
+      formData.append('top_k', topK);
+      formData.append('include_metrics', 'true');
+      if (knownText) {
+        formData.append('query_text', knownText);
+      }
+
+      try {
+        const res = await fetch('/v1/recognize', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Recognition failed');
+        }
+
+        const data = await res.json();
+        renderResults(data);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        label.innerText = 'Match Typeface';
+      }
+    }
+
+    function renderResults(data) {
+      document.getElementById('results-placeholder').classList.add('hidden');
+      const resultsList = document.getElementById('results-list');
+      const metrics = document.getElementById('query-metrics');
+
+      metrics.classList.remove('hidden');
+      document.getElementById('metric-latency').innerText = `${data.latency_ms} ms`;
+      document.getElementById('metric-glyphs').innerText = data.characters_detected;
+
+      resultsList.innerHTML = '';
+      resultsList.classList.remove('hidden');
+
+      if (!data.predictions || data.predictions.length === 0) {
+        resultsList.innerHTML = `<div class="p-6 text-center text-slate-500">No matching typefaces found.</div>`;
+        return;
+      }
+
+      data.predictions.forEach((pred) => {
+        const confPercent = Math.round(pred.confidence * 100);
+        const card = document.createElement('div');
+        card.className = 'glass-card p-4 rounded-xl flex flex-col space-y-3';
+
+        // Per glyph chips
+        let glyphChipsHtml = '';
+        if (pred.per_glyph_scores) {
+          for (const [key, detail] of Object.entries(pred.per_glyph_scores)) {
+            const simPct = Math.round(detail.similarity * 100);
+            glyphChipsHtml += `
+              <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700/80 text-[11px] mono">
+                <span class="text-indigo-400 font-bold">${detail.char}</span>
+                <span class="text-slate-500">:</span>
+                <span class="text-slate-300">${simPct}%</span>
+              </span>
+            `;
+          }
+        }
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="w-7 h-7 rounded-lg ${pred.rank === 1 ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-800 text-slate-400'} flex items-center justify-center text-xs mono">
+                #${pred.rank}
+              </span>
+              <div>
+                <h3 class="text-base font-bold text-white tracking-tight">${pred.family}</h3>
+                <div class="flex items-center space-x-2 text-xs text-slate-400 mono">
+                  <span>${pred.postscript_name}</span>
+                  <span>•</span>
+                  <span>Weight ${pred.weight}</span>
+                  <span>•</span>
+                  <span class="capitalize">${pred.style}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confidence Badge -->
+            <div class="text-right">
+              <div class="text-lg font-bold ${confPercent > 80 ? 'text-emerald-400' : 'text-indigo-400'} mono">${confPercent}%</div>
+              <div class="text-[10px] uppercase text-slate-500 tracking-wider font-semibold">Confidence</div>
+            </div>
+          </div>
+
+          <!-- Per-glyph similarity details -->
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-medium mr-1">Glyph Hits:</span>
+            ${glyphChipsHtml}
+          </div>
+
+          <!-- Live Editable Font Sandbox -->
+          <div class="mt-2 bg-slate-950/60 p-3 rounded-lg border border-slate-800/60">
+            <input type="text" value="Sphinx of black quartz, judge my vow." class="w-full bg-transparent text-slate-200 text-sm focus:outline-none" style="font-family: '${pred.family}', serif, sans-serif; font-weight: ${pred.weight}; font-style: ${pred.style};">
+          </div>
+        `;
+        resultsList.appendChild(card);
+      });
+    }
+
+    // Catalog Tab
+    async function loadCatalog() {
+      const loading = document.getElementById('catalog-loading');
+      const grid = document.getElementById('catalog-grid');
+      loading.classList.remove('hidden');
+      grid.innerHTML = '';
+
+      try {
+        const res = await fetch('/v1/catalog?limit=300');
+        const data = await res.json();
+        catalogCache = data.items || [];
+        loading.classList.add('hidden');
+        renderCatalog(catalogCache);
+      } catch (e) {
+        loading.innerText = 'Failed to load catalog.';
+      }
+    }
+
+    function renderCatalog(items) {
+      const grid = document.getElementById('catalog-grid');
+      grid.innerHTML = '';
+
+      if (!items || items.length === 0) {
+        grid.innerHTML = `<div class="col-span-3 text-center py-8 text-slate-500">No fonts found matching search.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'glass-card p-4 rounded-xl flex flex-col justify-between space-y-3';
+        card.innerHTML = `
+          <div>
+            <h3 class="text-sm font-bold text-white tracking-tight">${item.family}</h3>
+            <div class="text-xs text-slate-400 mono mt-0.5 truncate">${item.postscript_name}</div>
+          </div>
+          <div class="text-xl text-slate-300 py-2 border-y border-slate-800/60 tracking-wider truncate" style="font-family: '${item.family}', sans-serif;">
+            Aa Gg Ee Qq Rr
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-500 mono pt-1">
+            <span>Weights: ${item.weights.join(', ')}</span>
+            <span class="text-indigo-400">${item.glyph_count} Glyphs</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterCatalog(term) {
+      const q = term.toLowerCase().trim();
+      const filtered = catalogCache.filter(item => item.family.toLowerCase().includes(q) || item.postscript_name.toLowerCase().includes(q));
+      renderCatalog(filtered);
+    }
+
+    // Font Ingest Tab
+    function handleFontSelected(input) {
+      if (input.files && input.files.length > 0) {
+        const names = Array.from(input.files).map(f => f.name);
+        document.getElementById('font-file-name').innerText =
+          names.length === 1 ? `Selected: ${names[0]}` : `Selected ${names.length} files: ${names.join(', ')}`;
+      }
+    }
+
+    async function executeFontIngestion(e) {
+      e.preventDefault();
+      const input = document.getElementById('font-file-input');
+      if (!input.files || !input.files.length) return;
+
+      const btn = document.getElementById('ingest-btn');
+      const spinner = document.getElementById('ingest-spinner');
+      const label = document.getElementById('ingest-btn-label');
+      const resultBox = document.getElementById('ingest-result');
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      label.innerText = 'Indexing font vectors...';
+      resultBox.classList.add('hidden');
+
+      const files = Array.from(input.files);
+      const isBatch = files.length > 1;
+      const formData = new FormData();
+      if (isBatch) {
+        files.forEach(f => formData.append('files', f));
+      } else {
+        formData.append('file', files[0]);
+      }
+
+      const famOverride = document.getElementById('font-family-override').value.trim();
+      const licOverride = document.getElementById('font-license-override').value.trim();
+      if (famOverride || licOverride) {
+        formData.append('metadata', JSON.stringify({ family: famOverride, license: licOverride }));
+      }
+
+      try {
+        const res = await fetch(isBatch ? '/v1/index/fonts' : '/v1/index/font', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Ingestion failed');
+        }
+
+        const data = await res.json();
+        resultBox.classList.remove('hidden');
+        if (isBatch) {
+          const summary = data.results.map(r => `${r.postscript_name} (w=${r.weights_indexed.join(',')}, ${r.indexed_glyphs} glyphs)`).join('<br>• ');
+          resultBox.innerHTML = `
+            <strong>SUCCESS!</strong> Indexed ${data.files_indexed} font files (persisted=${data.persisted}).<br>
+            • ${summary}<br>
+            • Total Database Vectors: ${data.total_vectors_in_store}
+          `;
+        } else {
+          resultBox.innerHTML = `
+            <strong>SUCCESS!</strong> Indexed font <strong>${data.family}</strong> (${data.postscript_name}, persisted=${data.persisted}).<br>
+            • Indexed Glyphs: ${data.indexed_glyphs}<br>
+            • Weights Sampled: [${data.weights_indexed.join(', ')}]<br>
+            • Total Database Vectors: ${data.total_vectors_in_store}
+          `;
+        }
+        checkHealth();
+        catalogCache = []; // invalidate
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        label.innerText = 'Index Font Into Database';
+      }
+    }
+
+    // Periodic health check
+    checkHealth();
+    setInterval(checkHealth, 10000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glyphclip"
+version = "3.0.0"
+description = "Open-Source Contrastive Dual-Encoder Font Matching Engine"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Project Typographic" }
+]
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "pillow>=9.0.0",
+    "fonttools>=4.40.0",
+    "opencv-python>=4.7.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "scipy>=1.10.0",
+    "pydantic>=2.0.0",
+    "numpy>=1.24.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "onnxruntime>=1.15.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["glyphclip*"]
