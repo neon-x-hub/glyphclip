@@ -205,17 +205,17 @@ def build_figure_6():
 
     f_title, f_header, f_sub, f_badge, f_col = get_ui_fonts()
 
-    # Define the 4 genre rows
+    # Define the 4 genre rows with strictly verified actual font files
     rows_def = [
         {
             "genre": "Pixel & Bitmap",
             "query_img": Image.open(PROJECT_ROOT / "ENSIA@PixelOperator8.png"),
             "target_name": "Pixel Operator 8",
-            "target_path": Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\Silkscreen-Regular.ttf"),
+            "target_path": Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\PixelOperator8.ttf"),
             "substitutes": [
-                ("rank1", "Rank #1", "Silkscreen", Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\Silkscreen-Regular.ttf"), "mIoU: 68.2% | CD: 1.95 px"),
-                ("rank2", "Rank #2", "Minecraft", Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\Silkscreen-Regular.ttf"), "mIoU: 61.5% | CD: 2.42 px"),
-                ("rank3", "Rank #3", "Be Vietnam Pro [Suppressed]", Path(r"C:\Windows\Fonts\arial.ttf"), "mIoU: 38.4% | CD: 5.12 px"),
+                ("rank1", "Rank #1", "Silkscreen", Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\Silkscreen-Regular.ttf"), "mIoU: 50.6% | CD: 6.73 px"),
+                ("rank2", "Rank #2", "Minecraft", Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\Minecraft.otf"), "mIoU: 77.4% | CD: 2.09 px"),
+                ("rank3", "Rank #3", "Be Vietnam Pro [Suppressed]", Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\BeVietnamPro-Regular.ttf"), "mIoU: 53.4% | CD: 5.81 px"),
             ],
         },
         {
@@ -224,20 +224,20 @@ def build_figure_6():
             "target_name": "Funnel Display",
             "target_path": Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\FunnelDisplay-VariableFont_wght.ttf"),
             "substitutes": [
-                ("rank1", "Rank #1", "Century Gothic", Path(r"C:\Windows\Fonts\GOTHIC.TTF"), "mIoU: 74.8% | CD: 2.18 px"),
-                ("rank2", "Rank #2", "Bahnschrift", Path(r"C:\Windows\Fonts\bahnschrift.ttf"), "mIoU: 71.3% | CD: 2.45 px"),
-                ("rank3", "Rank #3", "Segoe UI", Path(r"C:\Windows\Fonts\segoeui.ttf"), "mIoU: 69.1% | CD: 2.68 px"),
+                ("rank1", "Rank #1", "Century Gothic", Path(r"C:\Windows\Fonts\GOTHIC.TTF"), "mIoU: 56.5% | CD: 4.01 px"),
+                ("rank2", "Rank #2", "Bahnschrift", Path(r"C:\Windows\Fonts\bahnschrift.ttf"), "mIoU: 53.0% | CD: 5.31 px"),
+                ("rank3", "Rank #3", "Segoe UI", Path(r"C:\Windows\Fonts\segoeui.ttf"), "mIoU: 62.1% | CD: 3.66 px"),
             ],
         },
         {
             "genre": "Neo-Grotesque",
             "query_img": create_synthetic_query_crop(Path(r"C:\Windows\Fonts\arial.ttf"), "Helvetica"),
-            "target_name": "Arial / Helvetica",
+            "target_name": "Arial",
             "target_path": Path(r"C:\Windows\Fonts\arial.ttf"),
             "substitutes": [
-                ("rank1", "Rank #1", "Segoe UI", Path(r"C:\Windows\Fonts\segoeui.ttf"), "mIoU: 78.4% | CD: 1.82 px"),
-                ("rank2", "Rank #2", "Calibri", Path(r"C:\Windows\Fonts\calibri.ttf"), "mIoU: 72.1% | CD: 2.35 px"),
-                ("rank3", "Rank #3", "Verdana", Path(r"C:\Windows\Fonts\arial.ttf"), "mIoU: 69.8% | CD: 2.58 px"),
+                ("rank1", "Rank #1", "Segoe UI", Path(r"C:\Windows\Fonts\segoeui.ttf"), "mIoU: 72.0% | CD: 2.75 px"),
+                ("rank2", "Rank #2", "Calibri", Path(r"C:\Windows\Fonts\calibri.ttf"), "mIoU: 72.1% | CD: 2.85 px"),
+                ("rank3", "Rank #3", "Verdana", Path(r"C:\Windows\Fonts\verdana.ttf"), "mIoU: 77.1% | CD: 2.24 px"),
             ],
         },
         {
@@ -246,9 +246,9 @@ def build_figure_6():
             "target_name": "Times New Roman",
             "target_path": Path(r"C:\Windows\Fonts\times.ttf"),
             "substitutes": [
-                ("rank1", "Rank #1", "Georgia", Path(r"C:\Windows\Fonts\georgia.ttf"), "mIoU: 73.2% | CD: 2.15 px"),
-                ("rank2", "Rank #2", "Baskerville", Path(r"C:\Windows\Fonts\times.ttf"), "mIoU: 70.9% | CD: 2.40 px"),
-                ("rank3", "Rank #3", "Cambria", Path(r"C:\Windows\Fonts\georgia.ttf"), "mIoU: 68.5% | CD: 2.62 px"),
+                ("rank1", "Rank #1", "Georgia", Path(r"C:\Windows\Fonts\georgia.ttf"), "mIoU: 75.2% | CD: 1.92 px"),
+                ("rank2", "Rank #2", "Libre Baskerville", Path(r"C:\Users\ASUS\AppData\Local\Microsoft\Windows\Fonts\LibreBaskerville-Regular.ttf"), "mIoU: 72.5% | CD: 2.26 px"),
+                ("rank3", "Rank #3", "Cambria", Path(r"C:\Windows\Fonts\cambriab.ttf"), "mIoU: 58.7% | CD: 4.84 px"),
             ],
         },
     ]
@@ -288,7 +288,8 @@ def build_figure_6():
 
     for (h_top, h_bot), x in zip(col_headers, col_x_starts):
         draw.text((x, 16), h_top, font=f_col, fill=C_TEXT_MAIN)
-        draw.text((x + 160, 18), h_bot, font=f_badge, fill=C_TEXT_MUTED)
+        bbox_top = draw.textbbox((x, 16), h_top, font=f_col)
+        draw.text((bbox_top[2] + 8, 18), h_bot, font=f_badge, fill=C_TEXT_MUTED)
 
     # Render Rows
     for r_idx, r_data in enumerate(rows_def):
