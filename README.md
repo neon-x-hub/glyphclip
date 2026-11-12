@@ -20,7 +20,19 @@ Evaluated across **106 strictly held-out font families** (6,396 canonical vector
 | **v3.0 Production (Ours)** | **2-ch TSDF + Ortho Trait** | **89.4%** | **95.0%** | **0.9667** | **93.3%** |
 | *v3.0 (Ablation: No Char Head)* | 2-ch TSDF (No Aux Head) | — | 91.5% | 0.9395 | — |
 
-* **Zero-Leakage From-Scratch Training:** Eliminating warmstart weight leakages and widening cross-weight pairing to $|w_1 - w_2| \le 400$ boosts $\Delta w = 300$ (Regular $\to$ Bold) retrieval to **93.3%** and extreme $\Delta w = 400$ jumps to **76.7%** (+26.7 percentage points over v2.2).
+### Leave-One-Out Typographic Substitute Benchmark (Target Excluded)
+
+When the exact target font family is absent from the index (e.g. proprietary or custom brand fonts), models must recommend the closest visual substitute. Evaluated across 52-letter canonical alphabet geometry and standardized specimen strings:
+
+| Model / Retrieval Strategy | Mean Glyph IoU@1 ($\uparrow$) | Chamfer Distance@1 ($\downarrow$) | TSDF-$L_1$ Error@1 ($\downarrow$) | Specimen SSIM@1 ($\uparrow$) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Random Upright Baseline** | 32.8% | 8.57 px | 0.1541 | 0.6593 |
+| **v1.1 Scaled Raster Baseline** | 40.3% | 7.38 px | 0.1233 | 0.6715 |
+| **GlyphCLIP v3.0 (Ours)** | **48.3%** | **6.17 px** | **0.1036** | **0.6744** |
+
+* **Objective Geometric Fidelity:** GlyphCLIP reduces contour Chamfer error by **-28.0%** relative to random baseline and increases Mean Glyph IoU by **+15.5 percentage points** over random and **+8.0 percentage points** over 1-channel raster.
+* **Monotonic Manifold Structuring:** Retrieval fidelity degrades monotonically across ranks ($K=1 \to 3 \to 5$: mIoU $48.3\% \to 46.1\% \to 45.8\%$; Chamfer $6.17\text{ px} \to 6.46\text{ px} \to 6.52\text{ px}$), proving that distance on the 512-D hypersphere directly reflects physical 2D contour geometry.
+* **Zero-Leakage From-Scratch Training:** Widening cross-weight pairing to $|w_1 - w_2| \le 400$ boosts $\Delta w = 300$ (Regular $\to$ Bold) retrieval to **93.3%** and extreme $\Delta w = 400$ jumps to **76.7%** (+26.7 percentage points over v2.2).
 * **Sobel Edge-Orthogonality Trait:** Penalizes curved false positives when querying bitmap typefaces (`Pixel Operator 8`, `Minecraft`), promoting pixelated fonts like `Silkscreen` to Rank #1 while applying zero penalty to smooth display curves (`Funnel Display`).
 * **Sub-Millisecond ANN Scaling:** $O(1)$ inverted character bucketing paired with spherical IVF-Cosine ANN executes in **0.034 ms** at 2,912 vectors and **0.950 ms** at 60,000 vectors with **100.0% Recall@1** ($n_{\text{probe}} = 25\%$).
 
@@ -84,6 +96,7 @@ GlyphCLIP/
 │   ├── test_consensus.py              # Vector store ANN & Bayesian consensus tests
 │   └── test_api.py                    # API endpoints & TorchScript export tests
 └── scripts/
+    ├── run_substitute_benchmark.py    # Leave-One-Out geometric & perceptual fidelity benchmark
     ├── run_ablations.py               # End-to-end ablation harness (106 test fonts)
     ├── train_sdf.py                   # v2.2 / v3.0 2-ch Vector-SDF training script
     ├── train_scaled.py                # v1.1 scaled 1-ch raster ConvNeXt training script

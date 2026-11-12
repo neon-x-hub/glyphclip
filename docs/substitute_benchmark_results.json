@@ -1,0 +1,274 @@
+{
+  "num_test_fonts": 106,
+  "num_test_families": 57,
+  "metrics": {
+    "random_baseline": {
+      "miou@1": 0.3282,
+      "chamfer@1": 8.5656,
+      "tsdf_l1@1": 0.1541,
+      "ssim@1": 0.6593,
+      "miou@3": 0.3389,
+      "chamfer@3": 8.7218,
+      "tsdf_l1@3": 0.1537,
+      "ssim@3": 0.6546,
+      "miou@5": 0.3413,
+      "chamfer@5": 8.7635,
+      "tsdf_l1@5": 0.1529,
+      "ssim@5": 0.6528
+    },
+    "v1_1_raster_1ch": {
+      "miou@1": 0.4026,
+      "chamfer@1": 7.3815,
+      "tsdf_l1@1": 0.1233,
+      "ssim@1": 0.6715,
+      "miou@3": 0.4166,
+      "chamfer@3": 7.1506,
+      "tsdf_l1@3": 0.1222,
+      "ssim@3": 0.6685,
+      "miou@5": 0.4151,
+      "chamfer@5": 7.2015,
+      "tsdf_l1@5": 0.1233,
+      "ssim@5": 0.6669
+    },
+    "v3_0_vectorsdf_scratch": {
+      "miou@1": 0.4833,
+      "chamfer@1": 6.1712,
+      "tsdf_l1@1": 0.1036,
+      "ssim@1": 0.6744,
+      "miou@3": 0.4611,
+      "chamfer@3": 6.463,
+      "tsdf_l1@3": 0.1115,
+      "ssim@3": 0.6724,
+      "miou@5": 0.4584,
+      "chamfer@5": 6.5216,
+      "tsdf_l1@5": 0.1133,
+      "ssim@5": 0.6704
+    }
+  },
+  "qualitative_cases": [
+    {
+      "gt_family": "Balgin-BlackCondensed",
+      "gt_key": "balgin-blackcondensed",
+      "word": "Graphic",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "gill sans mt ext condensed",
+          "miou": 0.5362,
+          "chamfer": 6.69,
+          "ssim": 0.7343
+        },
+        {
+          "rank": 2,
+          "sub_key": "vvds fifties",
+          "miou": 0.2929,
+          "chamfer": 8.38,
+          "ssim": 0.7415
+        },
+        {
+          "rank": 3,
+          "sub_key": "bernard mt condensed",
+          "miou": 0.7038,
+          "chamfer": 4.03,
+          "ssim": 0.6695
+        }
+      ]
+    },
+    {
+      "gt_family": "Balgin-BlackCondensed",
+      "gt_key": "balgin-blackcondensed",
+      "word": "Typography",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "arial",
+          "miou": 0.4147,
+          "chamfer": 7.14,
+          "ssim": 0.7093
+        },
+        {
+          "rank": 2,
+          "sub_key": "niagara solid",
+          "miou": 0.5282,
+          "chamfer": 5.57,
+          "ssim": 0.7502
+        },
+        {
+          "rank": 3,
+          "sub_key": "agency fb",
+          "miou": 0.7188,
+          "chamfer": 4.11,
+          "ssim": 0.6945
+        }
+      ]
+    },
+    {
+      "gt_family": "PP Frama",
+      "gt_key": "pp frama",
+      "word": "Graphic",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "arial",
+          "miou": 0.4107,
+          "chamfer": 5.01,
+          "ssim": 0.7138
+        },
+        {
+          "rank": 2,
+          "sub_key": "inter variable",
+          "miou": 0.3228,
+          "chamfer": 5.82,
+          "ssim": 0.6968
+        },
+        {
+          "rank": 3,
+          "sub_key": "microsoft yi baiti",
+          "miou": 0.5061,
+          "chamfer": 2.99,
+          "ssim": 0.7056
+        }
+      ]
+    },
+    {
+      "gt_family": "PP Frama",
+      "gt_key": "pp frama",
+      "word": "Typography",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "arial",
+          "miou": 0.4107,
+          "chamfer": 5.01,
+          "ssim": 0.7138
+        },
+        {
+          "rank": 2,
+          "sub_key": "inter variable",
+          "miou": 0.3228,
+          "chamfer": 5.82,
+          "ssim": 0.6968
+        },
+        {
+          "rank": 3,
+          "sub_key": "microsoft yi baiti",
+          "miou": 0.5061,
+          "chamfer": 2.99,
+          "ssim": 0.7056
+        }
+      ]
+    },
+    {
+      "gt_family": "PP Frama",
+      "gt_key": "pp frama",
+      "word": "Graphic",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "inter variable",
+          "miou": 0.3228,
+          "chamfer": 5.82,
+          "ssim": 0.6968
+        },
+        {
+          "rank": 2,
+          "sub_key": "arial",
+          "miou": 0.4107,
+          "chamfer": 5.01,
+          "ssim": 0.7138
+        },
+        {
+          "rank": 3,
+          "sub_key": "nachlieli clm",
+          "miou": 0.3295,
+          "chamfer": 8.72,
+          "ssim": 0.6717
+        }
+      ]
+    },
+    {
+      "gt_family": "PP Frama",
+      "gt_key": "pp frama",
+      "word": "Typography",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "arial",
+          "miou": 0.4107,
+          "chamfer": 5.01,
+          "ssim": 0.7138
+        },
+        {
+          "rank": 2,
+          "sub_key": "inter variable",
+          "miou": 0.3228,
+          "chamfer": 5.82,
+          "ssim": 0.6968
+        },
+        {
+          "rank": 3,
+          "sub_key": "vvds fifties",
+          "miou": 0.1356,
+          "chamfer": 13.0,
+          "ssim": 0.7176
+        }
+      ]
+    },
+    {
+      "gt_family": "PP Frama",
+      "gt_key": "pp frama",
+      "word": "Graphic",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "vvds fifties",
+          "miou": 0.1356,
+          "chamfer": 13.0,
+          "ssim": 0.7176
+        },
+        {
+          "rank": 2,
+          "sub_key": "inter variable",
+          "miou": 0.3228,
+          "chamfer": 5.82,
+          "ssim": 0.6968
+        },
+        {
+          "rank": 3,
+          "sub_key": "arial",
+          "miou": 0.4107,
+          "chamfer": 5.01,
+          "ssim": 0.7138
+        }
+      ]
+    },
+    {
+      "gt_family": "PP Frama",
+      "gt_key": "pp frama",
+      "word": "Typography",
+      "top_substitutes": [
+        {
+          "rank": 1,
+          "sub_key": "vvds fifties",
+          "miou": 0.1356,
+          "chamfer": 13.0,
+          "ssim": 0.7176
+        },
+        {
+          "rank": 2,
+          "sub_key": "arial",
+          "miou": 0.4107,
+          "chamfer": 5.01,
+          "ssim": 0.7138
+        },
+        {
+          "rank": 3,
+          "sub_key": "inter variable",
+          "miou": 0.3228,
+          "chamfer": 5.82,
+          "ssim": 0.6968
+        }
+      ]
+    }
+  ]
+}

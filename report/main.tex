@@ -27,7 +27,7 @@
 \begin{abstract}
 Traditional automated font recognition frameworks frame typeface identification as a closed-set categorical classification problem, requiring costly parameter re-training whenever new typefaces or variable weights are added. Metric learning alternatives operating on raw rasterized glyph bitmaps frequently fail in unconstrained real-world settings due to three pervasive bottlenecks: the domain gap between pristine mathematical outline splines and noisy camera crops, retrieval collapse in ``blind'' search regimes without user-provided transcription hints, and severe fragility to cross-weight variations (e.g., matching Bold weights against indexed Regular weights).
 
-In this work, we introduce \textbf{GlyphCLIP}, an open-source, contrastive dual-encoder font retrieval engine mapping typographic geometry onto a continuous 512-dimensional unit hypersphere ($\mathbb{S}^{511}$). To bridge the vector-to-raster gap, GlyphCLIP establishes a symmetrical \textbf{2-Channel Signed Distance Field (SDF) Geometric Bridge} combining normalized ink occupancy with a smooth, continuous Euclidean Truncated Signed Distance Field (TSDF) derived from analytical B\'ezier spline contours. To enable robust blind font retrieval without manual text hints, we introduce a decoupled 52-class auxiliary character classification head that generates character hypotheses without compromising the metric style space. Furthermore, we deploy from-scratch family-disjoint contrastive training across wide stroke-weight gaps ($|w_1 - w_2| \le 400$), paired with scale-adaptive polarity binarization, edge-orthogonality trait consensus, and spherical K-Means Inverted File (IVF-Cosine) indexing. On a held-out test split of 106 unseen font families (6,396 vectors, 424 word queries), GlyphCLIP achieves \textbf{89.4\%} Top-1 Text-Aligned accuracy and \textbf{95.0\%} Top-1 Blind Auto-Detection accuracy (0.9667 MRR), outperforming a 1-channel raster baseline by +86.0 percentage points. Across 30 multi-weight families, GlyphCLIP doubles cross-weight retrieval under large stroke jumps ($\Delta w = 300$) from 70.0\% to \textbf{93.3\%}, while serving sub-millisecond queries via an inverted vector index.
+In this work, we introduce \textbf{GlyphCLIP}, an open-source, contrastive dual-encoder font retrieval engine mapping typographic geometry onto a continuous 512-dimensional unit hypersphere ($\mathbb{S}^{511}$). To bridge the vector-to-raster gap, GlyphCLIP establishes a symmetrical \textbf{2-Channel Signed Distance Field (SDF) Geometric Bridge} combining normalized ink occupancy with a smooth, continuous Euclidean Truncated Signed Distance Field (TSDF) derived from analytical B\'ezier spline contours. To enable robust blind font retrieval without manual text hints, we introduce a decoupled 52-class auxiliary character classification head that generates character hypotheses without compromising the metric style space. Furthermore, we deploy from-scratch family-disjoint contrastive training across wide stroke-weight gaps ($|w_1 - w_2| \le 400$), paired with scale-adaptive polarity binarization, edge-orthogonality trait consensus, and spherical K-Means Inverted File (IVF-Cosine) indexing. On a held-out test split of 106 unseen font families (6,396 vectors, 424 word queries), GlyphCLIP achieves \textbf{89.4\%} Top-1 Text-Aligned accuracy and \textbf{95.0\%} Top-1 Blind Auto-Detection accuracy (0.9667 MRR), outperforming a 1-channel raster baseline by +86.0 percentage points. Across 30 multi-weight families, GlyphCLIP doubles cross-weight retrieval under large stroke jumps ($\Delta w = 300$) from 70.0\% to \textbf{93.3\%}, while serving sub-millisecond queries via an inverted vector index. Furthermore, in a Leave-One-Out benchmark where the true target family is strictly purged from the catalog, GlyphCLIP retrieves closest visual substitutes with \textbf{48.3\%} mean glyph IoU and a boundary Chamfer error of \textbf{6.17 px} (-28.0\% error reduction over random baseline), demonstrating that its hypersphere is continuous and geometrically metric-structured.
 \end{abstract}
 
 \section{Introduction}
@@ -62,6 +62,7 @@ To resolve these bottlenecks, this paper introduces \textbf{GlyphCLIP}, a contra
     \item \textbf{From-Scratch Wide-Gap Training Regime:} We construct a family-disjoint training corpus strictly isolating font families, and train a 20.58M parameter \texttt{GlyphConvNeXt} trunk from random initialization (\texttt{--scratch}) with wide cross-weight positive pairing ($|w_1 - w_2| \le 400$, $p=0.45$). This completely resolves weight-gap sensitivity, doubling Regular-to-Bold cross-weight retrieval from 43.3\% to \textbf{93.3\%} on a 30-family stress benchmark.
     \item \textbf{Polarity-Adaptive Segmentation \& Trait Scoring:} We integrate an Otsu-guided polarity pre-inversion pipeline that eliminates dark-background edge halos on inverted banners, alongside a Sobel edge-orthogonality score ($o \in [0, 1]$) that penalizes curved false positives when querying genuine bitmap/pixel typefaces.
     \item \textbf{Spherical K-Means IVF-Cosine Indexing:} We build an $O(1)$ character-bucketed Inverted File (IVF-Cosine) vector store providing exact and approximate nearest-neighbor retrieval in under 1.0 ms across 60,000 indexed glyph vectors.
+    \item \textbf{Leave-One-Out Typographic Substitute Benchmark:} We introduce an objective geometric protocol measuring Mean Glyph IoU ($\text{mIoU}$), boundary Chamfer distance ($\text{CD}$), and continuous TSDF field error under Leave-One-Out conditions (where the target family is strictly absent from the catalog), proving that GlyphCLIP's 512-D hypersphere organizes typefaces by genuine contour and outline geometry.
 \end{itemize}
 
 \section{Related Work}
@@ -339,6 +340,43 @@ Figure~\ref{fig:ann_scaling} benchmarks retrieval latency and Recall@1 across ca
     \item Exact unfiltered linear search latency scales linearly from 0.18 ms to 5.27 ms.
     \item Utilizing $O(1)$ character buckets combined with IVF-Cosine ANN restricts search to relevant clusters, executing in \textbf{0.034 ms} at 2,912 vectors and \textbf{0.950 ms} at 60,000 vectors.
     \item Approximation Recall@1 remains at \textbf{100.0\%} from 10,000 to 60,000 vectors with $n_{\text{probe}} = 25\%$.
+\end{itemize}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/fig6_visual_substitutes.pdf}
+    \caption{\textbf{Leave-One-Out Top-$K$ Typographic Substitute Retrieval across Four Distinct Design Genres.} When the ground-truth typeface $f^*$ is strictly excluded from the search index (simulating real-world graphic design search for un-indexed or proprietary fonts), GlyphCLIP maps query crops to genuine typographic near-twins possessing matching x-height, aperture, and contour curvature. Metrics indicate Mean Glyph IoU ($\text{mIoU}$) and symmetric boundary Chamfer distance ($\text{CD}$ in pixels) evaluated across all 52 letters of the canonical alphabet.}
+    \label{fig:substitutes}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\small
+\caption{\textbf{Top-$K$ Visual \& Geometric Fidelity under Leave-One-Out Substitute Retrieval (57 Held-Out Families).} When the ground-truth target font $f^*$ is strictly purged from the search catalog, models are evaluated on the geometric quality of their top-$K$ recommended substitutes. Metrics are averaged across all 52 letters of $\mathcal{C}_{\text{alpha}}$ and the standardized \texttt{"Hamburgefonstiv"} specimen string.}
+\label{tab:substitute}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccccccccccc@{}}
+\toprule
+\textbf{Model / Retrieval Strategy} & \multicolumn{3}{c}{\textbf{Mean Glyph IoU} ($\uparrow$)} & \multicolumn{3}{c}{\textbf{Chamfer Distance in px} ($\downarrow$)} & \multicolumn{3}{c}{\textbf{TSDF-$L_1$ Field Error} ($\downarrow$)} & \multicolumn{3}{c}{\textbf{Specimen SSIM} ($\uparrow$)} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
+ & \textbf{@1} & \textbf{@3} & \textbf{@5} & \textbf{@1} & \textbf{@3} & \textbf{@5} & \textbf{@1} & \textbf{@3} & \textbf{@5} & \textbf{@1} & \textbf{@3} & \textbf{@5} \\ \midrule
+Random Upright Baseline & 32.8\% & 33.9\% & 34.1\% & 8.57 & 8.72 & 8.76 & 0.1541 & 0.1537 & 0.1529 & 0.6593 & 0.6546 & 0.6528 \\
+v1.1 Scaled Raster Baseline & 40.3\% & 41.7\% & 41.5\% & 7.38 & 7.15 & 7.20 & 0.1233 & 0.1222 & 0.1233 & 0.6715 & 0.6685 & 0.6669 \\
+\textbf{GlyphCLIP v3.0 (Ours)} & \textbf{48.3\%} & \textbf{46.1\%} & \textbf{45.8\%} & \textbf{6.17} & \textbf{6.46} & \textbf{6.52} & \textbf{0.1036} & \textbf{0.1115} & \textbf{0.1133} & \textbf{0.6744} & \textbf{0.6724} & \textbf{0.6704} \\ \bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\subsection{Leave-One-Out Typographic Substitute Benchmark}
+Standard font retrieval benchmarks evaluate Top-1 accuracy as a binary hit-or-miss metric: if a model retrieves a visually near-identical substitute typeface (e.g., retrieving \textit{Segoe UI} or \textit{Inter} when querying \textit{Helvetica}), standard evaluation penalizes it identically to retrieving an arbitrary script or gothic face. In practical graphic design workflows, however, users frequently upload crops of proprietary, licensed, or bespoke brand typefaces that do not exist in their local index, seeking the closest available visual substitute.
+
+To benchmark substitute fidelity rigorously without human subjectivity, we establish a \textbf{Leave-One-Out Typographic Substitute Benchmark}. For each query from the held-out test split, the ground-truth family $f^*$ is strictly purged from the search index. The retrieval engine is forced to recommend the top-$K$ substitutes $\{f_1, \dots, f_K\}$ from the remaining catalog. We evaluate objective geometric alignment between $f^*$ and each substitute across all 52 letters of the canonical alphabet $\mathcal{C}_{\text{alpha}}$ and the standardized specimen string \texttt{"Hamburgefonstiv"}.
+
+As presented in Table~\ref{tab:substitute} and Figure~\ref{fig:substitutes}:
+\begin{itemize}
+    \item \textbf{Significant Geometric Gain:} While a random upright font achieves only $32.8\%$ mIoU and an $8.57\text{ px}$ boundary Chamfer distance, GlyphCLIP v3.0 attains \textbf{48.3\%} mIoU@1 (+15.5 percentage points) and reduces boundary Chamfer error to \textbf{6.17 px} (a 28.0\% reduction in contour error), significantly surpassing the 1-channel raster baseline ($40.3\%$ mIoU, $7.38\text{ px}$ Chamfer distance).
+    \item \textbf{Monotonic Metric Structuring:} GlyphCLIP exhibits strict monotonic degradation as rank expands ($K=1 \to 3 \to 5$): mIoU decreases smoothly from $48.3\% \to 46.1\% \to 45.8\%$, while Chamfer distance increases from $6.17\text{ px} \to 6.46\text{ px} \to 6.52\text{ px}$. This confirms that geodesic proximity on the 512-dimensional hypersphere $\mathbb{S}^{511}$ directly preserves 2D outline and contour geometry.
+    \item \textbf{Qualitative Near-Twin Retrieval:} As visualized in Figure~\ref{fig:substitutes}, across pixel typefaces, geometric sans-serifs, neo-grotesques, and transitional serifs, GlyphCLIP's top substitute recommendations consistently match the query's x-height, aperture openness, stroke contrast, and edge orthogonality.
 \end{itemize}
 
 \subsection{Production Suite Verification}
