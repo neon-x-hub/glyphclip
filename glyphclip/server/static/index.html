@@ -56,7 +56,7 @@
         </div>
         <div>
           <span class="text-xl font-bold tracking-tight text-white">Glyph<span class="gradient-text">CLIP</span></span>
-          <span class="text-xs px-2 py-0.5 ml-2 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800 mono">v2.1</span>
+          <span class="text-xs px-2 py-0.5 ml-2 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800 mono">v3.0</span>
         </div>
       </div>
 
@@ -97,7 +97,7 @@
     <!-- TAB 1: RECOGNIZE -->
     <section id="tab-recognize" class="tab-content space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         <!-- Left: Upload & Controls -->
         <div class="lg:col-span-5 space-y-4">
           <div class="glass p-5 rounded-2xl">
@@ -355,7 +355,7 @@
     function generateSampleImage() {
       const text = document.getElementById('sample-text-input').value.trim() || 'Typo';
       const font = document.getElementById('sample-font-select').value;
-      
+
       const knownInput = document.getElementById('known-text-input');
       if (knownInput) {
         knownInput.value = text;
