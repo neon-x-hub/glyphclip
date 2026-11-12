@@ -15,7 +15,7 @@
 \author{
   \textbf{Abderrahmane Memmou}\thanks{This research was conducted as an independent, individual research project.} \\
   National Higher School of Artificial Intelligence, Algiers \\
-  \texttt{abderrahmane.memmou@ensai.edu.dz}
+  \texttt{abderrahmane.memmou@ensia.edu.dz}
 }
 
 \date{November 2026}
@@ -25,7 +25,7 @@
 \maketitle
 
 \begin{abstract}
-Traditional automated font recognition frameworks frame typeface identification as a closed-set categorical classification problem, requiring costly parameter re-training whenever new typefaces or variable weights are added. Metric learning alternatives operating on raw rasterized glyph bitmaps frequently fail in unconstrained real-world settings due to three pervasive bottlenecks: the domain gap between pristine mathematical outline splines and noisy camera crops, retrieval collapse in ``blind'' search regimes without user-provided transcription hints, and severe fragility to cross-weight variations (e.g., matching Bold weights against indexed Regular weights). 
+Traditional automated font recognition frameworks frame typeface identification as a closed-set categorical classification problem, requiring costly parameter re-training whenever new typefaces or variable weights are added. Metric learning alternatives operating on raw rasterized glyph bitmaps frequently fail in unconstrained real-world settings due to three pervasive bottlenecks: the domain gap between pristine mathematical outline splines and noisy camera crops, retrieval collapse in ``blind'' search regimes without user-provided transcription hints, and severe fragility to cross-weight variations (e.g., matching Bold weights against indexed Regular weights).
 
 In this work, we introduce \textbf{GlyphCLIP}, an open-source, contrastive dual-encoder font retrieval engine mapping typographic geometry onto a continuous 512-dimensional unit hypersphere ($\mathbb{S}^{511}$). To bridge the vector-to-raster gap, GlyphCLIP establishes a symmetrical \textbf{2-Channel Signed Distance Field (SDF) Geometric Bridge} combining normalized ink occupancy with a smooth, continuous Euclidean Truncated Signed Distance Field (TSDF) derived from analytical B\'ezier spline contours. To enable robust blind font retrieval without manual text hints, we introduce a decoupled 52-class auxiliary character classification head that generates character hypotheses without compromising the metric style space. Furthermore, we deploy from-scratch family-disjoint contrastive training across wide stroke-weight gaps ($|w_1 - w_2| \le 400$), paired with scale-adaptive polarity binarization, edge-orthogonality trait consensus, and spherical K-Means Inverted File (IVF-Cosine) indexing. On a held-out test split of 106 unseen font families (6,396 vectors, 424 word queries), GlyphCLIP achieves \textbf{89.4\%} Top-1 Text-Aligned accuracy and \textbf{95.0\%} Top-1 Blind Auto-Detection accuracy (0.9667 MRR), outperforming a 1-channel raster baseline by +86.0 percentage points. Across 30 multi-weight families, GlyphCLIP doubles cross-weight retrieval under large stroke jumps ($\Delta w = 300$) from 70.0\% to \textbf{93.3\%}, while serving sub-millisecond queries via an inverted vector index.
 \end{abstract}
@@ -73,7 +73,7 @@ Early visual font recognition systems utilized handcrafted local typographic des
 Contrastive representation learning has revolutionized open-world visual retrieval. Models such as CLIP~\cite{radford2021learning} project visual images and natural language into a shared metric embedding space using symmetric temperature-scaled InfoNCE objectives~\cite{vandenOord2018RepresentationLW}. In document analysis and fine-grained visual search, dual encoders embed queries and database targets onto unit hyperspheres ($\mathbb{S}^{D-1}$), enabling scalable sub-linear retrieval via Inverted File (IVF) or Hierarchical Navigable Small World (HNSW) graphs. While contrastive dual-encoders have succeeded in image-text and face verification, applying them to typography demands specialized geometric invariants capable of resolving subtle stem curvatures and serif micro-features.
 
 \subsection{Vector Graphics \& Signed Distance Fields}
-Vector graphics representation in deep learning generally bifurcates into explicit token-sequence modeling and implicit continuous fields. Sequence-based models, such as DeepSVG~\cite{carlier2020deepsvg}, tokenize vector paths into sequences of SVG commands and coordinate tuples processed via Transformers or recurrent networks. However, sequence models suffer from severe gauge variance: a closed glyph contour can begin at any arbitrary vertex and traverse clockwise or counter-clockwise, forcing the network to waste capacity learning vertex-order invariance while forfeiting 2D spatial locality. 
+Vector graphics representation in deep learning generally bifurcates into explicit token-sequence modeling and implicit continuous fields. Sequence-based models, such as DeepSVG~\cite{carlier2020deepsvg}, tokenize vector paths into sequences of SVG commands and coordinate tuples processed via Transformers or recurrent networks. However, sequence models suffer from severe gauge variance: a closed glyph contour can begin at any arbitrary vertex and traverse clockwise or counter-clockwise, forcing the network to waste capacity learning vertex-order invariance while forfeiting 2D spatial locality.
 
 Conversely, Signed Distance Fields (SDFs) and Euclidean Distance Transforms (EDT)~\cite{Felzenszwalb2012DistanceTO} map 2D geometric boundaries into continuous scalar fields where the zero-crossing explicitly defines the spline interface. In our work, we formulate the canonical glyph outline as a 2-channel tensor combining binary occupancy with a smooth hyperbolic tangent TSDF, establishing an analytical bridge between exact vector contours and visual raster crops.
 
@@ -102,22 +102,22 @@ The final GlyphCLIP v3.0 architecture is the culmination of three iterative gene
 \subsection{Phase 1: 1-Channel Raster Failures}
 In initial experiments (\textbf{v1.0}), canonical fonts were rendered via FreeType into 1-channel grayscale bitmaps, and a lightweight MobileNetV4 trunk~\cite{qin2024mobilenetv4} was trained with a frozen canonical encoder $E_c$. Because $E_c$ was frozen with random Gaussian weights, it operated as a static random hash rather than a structured typographic manifold. Training loss stagnated at $\mathcal{L} \approx \ln(32) = 3.465$, yielding near-random retrieval.
 
-Upgrading to an unfrozen, shared-backbone 20.55M parameter ConvNeXt trunk~\cite{Liu_2022_CVPR} with same-character hard-negative batching (\textbf{v1.1}) achieved strong convergence when query text was known ($51.4\%$ Top-1 across 106 test fonts). However, when queried ``blind'' without text hints, Top-1 accuracy collapsed to **9.0\%** (0.1856 MRR) due to cross-character confusion. Furthermore, pure FreeType rasterization discarded sub-pixel Bézier curvature, causing sensitivity to discrete edge aliasing.
+Upgrading to an unfrozen, shared-backbone 20.55M parameter ConvNeXt trunk~\cite{Liu_2022_CVPR} with same-character hard-negative batching (\textbf{v1.1}) achieved strong convergence when query text was known ($51.4\%$ Top-1 across 106 test fonts). However, when queried ``blind'' without text hints, Top-1 accuracy collapsed to \textbf{9.0\%} (0.1856 MRR) due to cross-character confusion. Furthermore, pure FreeType rasterization discarded sub-pixel Bézier curvature, causing sensitivity to discrete edge aliasing.
 
 \subsection{Phase 2: Analytical Vector-SDF \& Aux OCR}
-Introducing 2-channel Vector-SDF representations alongside a decoupled 52-class auxiliary OCR classification head (\textbf{v2.1}) propelled Blind Auto-Detection from 9.0\% to **94.1\%** on held-out test splits. Nevertheless, stress tests revealed two critical domain deficiencies:
+Introducing 2-channel Vector-SDF representations alongside a decoupled 52-class auxiliary OCR classification head (\textbf{v2.1}) propelled Blind Auto-Detection from 9.0\% to \textbf{94.1\%} on held-out test splits. Nevertheless, stress tests revealed two critical domain deficiencies:
 \begin{enumerate}
     \item \textbf{Stroke Weight Rigidity:} Pairing only adjacent weights ($\Delta w \le 200$) caused retrieval across standard weight jumps (e.g., querying Bold 700 when only Regular 400 is indexed) to drop to 70.0\% Top-1.
     \item \textbf{Rendering Artifacts:} Light text on dark backgrounds hollowed out during local Sauvola binarization, and morphological downscaling erased discrete square pixel corners in bitmap fonts.
 \end{enumerate}
 
 \subsection{Phase 3: GlyphCLIP v3.0 Formulation}
-GlyphCLIP v3.0 establishes clean from-scratch training (\texttt{--scratch}) with wide cross-weight pairing ($\Delta w \le 400$), multi-scale stroke morphology ($k \in \{3, 5, 7, 9\}$), scale-adaptive polarity binarization, and Sobel edge-orthogonality scoring. This lifts Regular-to-Bold retrieval to **93.3\%** and held-out Blind Auto-Detection to **95.0\%**, with zero cross-run weight leakage.
+GlyphCLIP v3.0 establishes clean from-scratch training (\texttt{--scratch}) with wide cross-weight pairing ($\Delta w \le 400$), multi-scale stroke morphology ($k \in \{3, 5, 7, 9\}$), scale-adaptive polarity binarization, and Sobel edge-orthogonality scoring. This lifts Regular-to-Bold retrieval to \textbf{93.3\%} and held-out Blind Auto-Detection to \textbf{95.0\%}, with zero cross-run weight leakage.
 
 \section{Methodology}
 
 \subsection{Analytical 2-Channel Vector-SDF Bridge}
-Digital typography files store glyphs as closed Bézier curves composed of on-curve knots and off-curve control points (quadratic B-splines in TrueType \texttt{glyf} tables and cubic Bézier splines in OpenType \texttt{CFF} tables). 
+Digital typography files store glyphs as closed Bézier curves composed of on-curve knots and off-curve control points (quadratic B-splines in TrueType \texttt{glyf} tables and cubic Bézier splines in OpenType \texttt{CFF} tables).
 
 To construct an analytical canonical representation, GlyphCLIP implements \texttt{VectorSDFRenderer} using \texttt{fontTools}:
 \begin{enumerate}
@@ -135,7 +135,7 @@ To construct an analytical canonical representation, GlyphCLIP implements \textt
         \end{equation}
         \item \textbf{Channel 1 (Truncated Signed Distance Field):} We compute the exact Euclidean distance transform on both the foreground mask $\mathbf{M}_{\text{HR}}$ and its background complement $\mathbf{M}_{\text{HR}}^c$. The signed distance $d(\mathbf{p})$ at coordinate $\mathbf{p}$ is defined as:
         \begin{equation}
-            d(\mathbf{p}) = \begin{cases} 
+            d(\mathbf{p}) = \begin{cases}
             +\min_{\mathbf{q} \in \partial \Omega} \|\mathbf{p} - \mathbf{q}\|_2, & \mathbf{p} \in \Omega \text{ (ink)}, \\
             -\min_{\mathbf{q} \in \partial \Omega} \|\mathbf{p} - \mathbf{q}\|_2, & \mathbf{p} \notin \Omega \text{ (bg)}.
             \end{cases}
@@ -202,7 +202,7 @@ where $\mathcal{L}_{\text{InfoNCE}}$ is the symmetric temperature-scaled contras
     + &\log \frac{\exp(\langle \mathbf{z}_{v, i}, \mathbf{z}_{c, i} \rangle / \tau)}{\sum_{j=1}^B \exp(\langle \mathbf{z}_{v, j}, \mathbf{z}_{c, i} \rangle / \tau)} \Bigg]
 \end{split}
 \end{equation}
-with learnable temperature parameter $\tau$, initialized at $\tau = 0.05$ and constrained to $\tau \in [10^{-4}, 1.0]$. 
+with learnable temperature parameter $\tau$, initialized at $\tau = 0.05$ and constrained to $\tau \in [10^{-4}, 1.0]$.
 
 \paragraph{Mixed Hard-Negative Batching.}
 Mini-batch sampling alternates $50\% / 50\%$ between:
@@ -265,8 +265,8 @@ The model is trained for 12 epochs using AdamW~\cite{loshchilov2018decoupled} ($
 \subsection{Held-Out Zero-Shot Retrieval Benchmark}
 We evaluate all model generations on the 106-font held-out test split under both Text-Aligned and Blind Auto-Detection regimes. As detailed in Table~\ref{tab:zeroshot} and Figure~\ref{fig:benchmarks}:
 \begin{itemize}
-    \item \textbf{1-Channel Raster Collapse:} The 1-channel baseline achieves 51.4\% Top-1 when given exact text hints, but collapses to **9.0\%** Top-1 and 0.1856 MRR under blind search.
-    \item \textbf{Vector-SDF Dominance:} The 2-channel Vector-SDF bridge combined with auxiliary OCR candidate filtering achieves **89.4\%** Text-Aligned Top-1 and **95.0\%** Blind Top-1 (0.9667 MRR).
+    \item \textbf{1-Channel Raster Collapse:} The 1-channel baseline achieves 51.4\% Top-1 when given exact text hints, but collapses to \textbf{9.0\%} Top-1 and 0.1856 MRR under blind search.
+    \item \textbf{Vector-SDF Dominance:} The 2-channel Vector-SDF bridge combined with auxiliary OCR candidate filtering achieves \textbf{89.4\%} Text-Aligned Top-1 and \textbf{95.0\%} Blind Top-1 (0.9667 MRR).
     \item \textbf{Auxiliary OCR Head Ablation:} Disabling the auxiliary character head during blind consensus (relying solely on unconstrained vector majority voting) causes Blind Top-1 accuracy to drop from 95.0\% to 91.5\% (a 3.5 percentage point reduction), confirming the essential role of the multi-task OCR branch.
 \end{itemize}
 
@@ -300,9 +300,9 @@ To benchmark weight sensitivity rigorously, we curate 30 font families with full
 
 As depicted in Figure~\ref{fig:weight_gap}:
 \begin{itemize}
-    \item The 1-channel raster baseline collapses completely under weight shifts (dropping from 26.7\% at $\Delta 0$ to **3.3\%** at $\Delta 300$).
+    \item The 1-channel raster baseline collapses completely under weight shifts (dropping from 26.7\% at $\Delta 0$ to \textbf{3.3\%} at $\Delta 300$).
     \item v2.2 (trained with $\Delta w \le 200$) degrades from 93.3\% at $\Delta 0$ down to 70.0\% at $\Delta 300$ and 50.0\% at $\Delta 400$.
-    \item **GlyphCLIP v3.0** (trained from scratch with $\Delta w \le 400$) maintains an unbroken **93.3\%** Blind Top-1 accuracy across $\Delta 0$, $\Delta 200$, and $\Delta 300$, and achieves **76.7\%** on extreme $\Delta 400$ jumps (+26.7 percentage points over v2.2).
+    \item \textbf{GlyphCLIP v3.0} (trained from scratch with $\Delta w \le 400$) maintains an unbroken \textbf{93.3\%} Blind Top-1 accuracy across $\Delta 0$, $\Delta 200$, and $\Delta 300$, and achieves \textbf{76.7\%} on extreme $\Delta 400$ jumps (+26.7 percentage points over v2.2).
 \end{itemize}
 
 \subsection{Edge-Orthogonality Trait Ablation}
@@ -337,12 +337,12 @@ Table~\ref{tab:ortho} illustrates the impact of the edge-orthogonality penalty o
 Figure~\ref{fig:ann_scaling} benchmarks retrieval latency and Recall@1 across catalog sizes from 2,912 to 60,000 vectors:
 \begin{itemize}
     \item Exact unfiltered linear search latency scales linearly from 0.18 ms to 5.27 ms.
-    \item Utilizing $O(1)$ character buckets combined with IVF-Cosine ANN restricts search to relevant clusters, executing in **0.034 ms** at 2,912 vectors and **0.950 ms** at 60,000 vectors.
-    \item Approximation Recall@1 remains at **100.0\%** from 10,000 to 60,000 vectors with $n_{\text{probe}} = 25\%$.
+    \item Utilizing $O(1)$ character buckets combined with IVF-Cosine ANN restricts search to relevant clusters, executing in \textbf{0.034 ms} at 2,912 vectors and \textbf{0.950 ms} at 60,000 vectors.
+    \item Approximation Recall@1 remains at \textbf{100.0\%} from 10,000 to 60,000 vectors with $n_{\text{probe}} = 25\%$.
 \end{itemize}
 
 \subsection{Production Suite Verification}
-On the curated production catalog (2,912 vectors across 28 standard Windows and open-source families), GlyphCLIP v3.0 achieves **11/11 (100.0\%)** Top-1 accuracy in both Hinted and Blind modes across the test suite (\texttt{test\_sdf\_production.py}), with end-to-end word recognition latency of $50 - 110\text{ ms}$.
+On the curated production catalog (2,912 vectors across 28 standard Windows and open-source families), GlyphCLIP v3.0 achieves \textbf{11/11 (100.0\%)} Top-1 accuracy in both Hinted and Blind modes across the test suite (\texttt{test\_sdf\_production.py}), with end-to-end word recognition latency of $50 - 110\text{ ms}$.
 
 \section{Discussion \& Limitations}
 While GlyphCLIP demonstrates remarkable zero-shot robustness across weight, polarity, and character variations, several frontiers remain:
