@@ -89,7 +89,7 @@ def plot_fig2_benchmarks(data: dict, out_dir: Path):
 
 def plot_fig3_weight_gap(data: dict, out_dir: Path):
     """Figure 3: Cross-weight jump sensitivity (Delta-W: 0, 200, 300, 400)."""
-    fig, ax = plt.subplots(figsize=(5.6, 3.4))
+    fig, ax = plt.subplots(figsize=(5.8, 3.6))
 
     cw_data = data["ablation_cross_weight"]["models"]
     x_pos = [0, 1, 2, 3]
@@ -114,13 +114,15 @@ def plot_fig3_weight_gap(data: dict, out_dir: Path):
 
     ax.set_xlabel(r"Stroke Weight Gap ($\Delta w = |w_{\mathrm{query}} - w_{\mathrm{index}}|$)")
     ax.set_ylabel("Blind Top-1 Accuracy (%)")
-    ax.set_title("Cross-Weight Invariance vs. Weight Jump (30 Families)")
+    ax.set_title("Cross-Weight Invariance vs. Weight Jump (30 Families)", pad=14)
     ax.set_xticks(x_pos)
     ax.set_xticklabels([r"$\Delta 0$" + "\n(Same Wt)", r"$\Delta 200$" + "\n(Med $\\to$ Bold)",
                         r"$\Delta 300$" + "\n(Reg $\\to$ Bold)", r"$\Delta 400$" + "\n(Light $\\to$ Bold)"])
     ax.set_xlim(-0.25, 3.25)
-    ax.set_ylim(15, 110)
-    ax.legend(loc="lower left", fontsize=8.0)
+    ax.set_ylim(-4, 112)
+    # Place legend cleanly at the top-center above data curves
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.02), ncol=3, fontsize=7.6, frameon=True,
+              facecolor="#FFFFFF", edgecolor="#E2E8F0", framealpha=0.92)
 
     fig.savefig(out_dir / "fig3_weight_gap_ablation.pdf")
     fig.savefig(out_dir / "fig3_weight_gap_ablation.png", dpi=300)
@@ -130,7 +132,7 @@ def plot_fig3_weight_gap(data: dict, out_dir: Path):
 
 def plot_fig4_ann_scaling(data: dict, out_dir: Path):
     """Figure 4: Vector store efficiency & recall across catalog sizes (Exact vs IVF-Cosine)."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.6, 3.2))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.8, 3.4))
     plt.subplots_adjust(wspace=0.32)
 
     benchmarks = data["ablation_ann_scaling"]["benchmarks"]
@@ -151,7 +153,8 @@ def plot_fig4_ann_scaling(data: dict, out_dir: Path):
     ax1.set_ylabel("Query Latency (ms / glyph)")
     ax1.set_title("(a) Retrieval Latency vs Index Size")
     ax1.set_yscale("log")
-    ax1.legend(loc="upper left", fontsize=7.6)
+    ax1.set_ylim(0.012, 35.0)
+    ax1.legend(loc="upper left", fontsize=7.4, frameon=True, facecolor="#FFFFFF", edgecolor="#E2E8F0", framealpha=0.9)
 
     # Panel 2: Recall@1 vs Recall@5
     rec_r1 = [b["ann_configs"]["nprobe_0.25"]["char_filtered_recall1"] for b in benchmarks]
@@ -166,7 +169,8 @@ def plot_fig4_ann_scaling(data: dict, out_dir: Path):
     ax2.set_ylabel("Search Recall vs Exact (%)")
     ax2.set_title("(b) IVF-Cosine Approximation Recall (nprobe=25%)")
     ax2.set_ylim(85, 102)
-    ax2.legend(loc="lower left", fontsize=8.0)
+    # Place legend in bottom-right where there is no data
+    ax2.legend(loc="lower right", fontsize=7.8, frameon=True, facecolor="#FFFFFF", edgecolor="#E2E8F0", framealpha=0.9)
 
     fig.savefig(out_dir / "fig4_ann_efficiency.pdf")
     fig.savefig(out_dir / "fig4_ann_efficiency.png", dpi=300)

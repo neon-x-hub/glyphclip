@@ -33,3 +33,12 @@ env/
 Thumbs.db
 *.tmp
 *.bak
+
+# LaTeX build artifacts (keep PDF and TeX sources)
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
