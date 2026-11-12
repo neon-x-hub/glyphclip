@@ -253,27 +253,21 @@ def build_figure_6():
         },
     ]
 
-    # Canvas geometry
+    # Canvas geometry (header title cropped so LaTeX \caption alone provides the caption)
     w_query = 340
     w_card = 490
     card_h = 136
     gap_x = 16
     gap_y = 18
     pad_left = 32
-    pad_top = 110
-    pad_bottom = 28
+    pad_top = 48
+    pad_bottom = 20
 
     total_w = pad_left * 2 + w_query + 4 * w_card + 4 * gap_x
     total_h = pad_top + 4 * card_h + 3 * gap_y + pad_bottom
 
     page = Image.new("RGB", (total_w, total_h), color=C_BG_PAGE)
     draw = ImageDraw.Draw(page)
-
-    # Main Title & Subtitle Banner
-    title_main = "Figure 6: Leave-One-Out Typographic Substitute Retrieval across Four Distinct Design Genres"
-    sub_main = "When the exact target font is absent from the catalog, GlyphCLIP maps query crops to genuine geometric near-twins with matching x-height, aperture, and contour curvature."
-    draw.text((pad_left, 24), title_main, font=f_title, fill=C_TEXT_MAIN)
-    draw.text((pad_left, 56), sub_main, font=f_sub, fill=C_TEXT_MUTED)
 
     # Column Headers
     col_x_starts = [
@@ -293,8 +287,8 @@ def build_figure_6():
     ]
 
     for (h_top, h_bot), x in zip(col_headers, col_x_starts):
-        draw.text((x, 82), h_top, font=f_col, fill=C_TEXT_MAIN)
-        draw.text((x + 160, 84), h_bot, font=f_badge, fill=C_TEXT_MUTED)
+        draw.text((x, 16), h_top, font=f_col, fill=C_TEXT_MAIN)
+        draw.text((x + 160, 18), h_bot, font=f_badge, fill=C_TEXT_MUTED)
 
     # Render Rows
     for r_idx, r_data in enumerate(rows_def):
